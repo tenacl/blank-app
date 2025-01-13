@@ -1,6 +1,5 @@
 import streamlit as st
 import anthropic
-import os
 
 # Claude API 설정
 DEFAULT_MODEL = "claude-3-sonnet-20240229"
@@ -15,7 +14,6 @@ def load_api_key():
 def call_claude(prompt, api_key):
     try:
         client = anthropic.Anthropic(api_key=api_key)
-        
         message = client.messages.create(
             model=DEFAULT_MODEL,
             max_tokens=1024,
@@ -26,7 +24,6 @@ def call_claude(prompt, api_key):
             응답은 반드시 마크다운 형식으로 작성하되, 마크다운 코드가 그대로 보이지 않도록 해주세요.
             항상 ### 수준의 헤딩을 사용하고, 마지막에는 실천 체크리스트를 표 형식으로 제공해주세요."""
         )
-        
         return message.content[0].text
     except anthropic.APIError as e:
         st.error(f"API 오류: {str(e)}")
@@ -36,6 +33,16 @@ def call_claude(prompt, api_key):
         return None
 
 def main():
+    st.set_page_config(
+        page_title="AI 재정・투자 상담",
+        page_icon="💰",
+        menu_items={
+            "Get help": None,
+            "Report a bug": None,
+            "About": None
+        }
+    )
+
     st.title("💰 학생 AI 재정・투자 상담")
     
     st.markdown("""
@@ -46,21 +53,16 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # API 키 자동 로드
     api_key = load_api_key()
     if not api_key:
-        st.error("API 키를 찾을 수 없습니다.")
         return
 
-    # 사용자 정보 입력
     with st.container():
         st.markdown("### 📝 재정 정보 입력")
-        
         col1, col2 = st.columns(2)
         with col1:
             monthly_income = st.number_input("월 수입(용돈+알바 등)", min_value=0, value=50000, step=10000)
             savings = st.number_input("현재 보유 금액", min_value=0, value=100000, step=10000)
-        
         with col2:
             monthly_expenses = st.number_input("월 평균 지출", min_value=0, value=30000, step=10000)
             target_amount = st.number_input("목표 금액", min_value=0, value=1000000, step=100000)
@@ -76,14 +78,13 @@ def main():
             ["주식", "펀드", "적금", "암호화폐", "P2P 투자", "기타"],
             default=["적금"]
         )
-
         risk_tolerance = st.select_slider(
             "투자 위험 감수 성향",
             options=["매우 보수적", "보수적", "중립적", "공격적", "매우 공격적"],
             value="보수적"
         )
 
-    if st.button("🤖 AI 상담 받기", use_container_width=True):
+    if st.button("🤖 AI 상담 받기"):
         if not financial_goal.strip():
             st.warning("⚠️ 재정 목표를 입력해주세요.")
             return
@@ -103,8 +104,6 @@ def main():
             prompt = f"""다음 학생의 재정 상태와 투자 성향을 분석하고 실용적인 조언을 제공해주세요:
 
 {user_info}
-
-다음 항목들을 포함하여 마크다운 형식으로 응답해주세요:
 
 ### 재정 분석 결과
 
@@ -133,18 +132,15 @@ def main():
 |---------|----------|----------|
 | 예시 항목 | 1주일 내 | □ |
 
-위 형식으로 구체적인 실천 항목을 최소 5개 제시해주세요.
-
 ### 투자 학습 리소스
-무료로 이용할 수 있는 투자 학습 자료나 플랫폼도 2-3개 추천해주세요."""
+무료로 이용할 수 있는 투자 학습 자료나 플랫폼도 2-3개 추천해주세요.
+"""
 
             advice = call_claude(prompt, api_key)
-            
             if advice:
                 st.markdown("---")
                 st.markdown("### 📊 AI 재정・투자 상담 결과")
-                with st.container():
-                    st.markdown(advice)
+                st.markdown(advice)
 
 if __name__ == "__main__":
     main()
