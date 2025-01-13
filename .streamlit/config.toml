@@ -1,3 +1,9 @@
 [global]
 showMenu = false
 showFooter = false
+
+[client]
+toolbarMode = “minimal”
+
+[ui]
+hideTopBar = true
